@@ -1,5 +1,8 @@
 # 🏥 Healthcare Patient Management System
 
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
+
 A secure, full-stack hospital management web application designed to streamline patient record handling and role-based operations. Built with **Flask** (Python) for the backend and **React.js + Tailwind CSS** for the frontend, it supports multiple roles such as **Admin, Nurse, and Receptionist**, with secure **JWT authentication** and **MongoDB** integration.
 
 ---
