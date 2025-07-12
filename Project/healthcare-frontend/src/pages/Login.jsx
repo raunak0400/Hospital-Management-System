@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../utils/auth";
+import toast from "react-hot-toast";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -8,8 +10,8 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [generalError, setGeneralError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validate = () => {
     const tempErrors = {};
@@ -32,7 +34,6 @@ export default function Login() {
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
-    setGeneralError("");
   };
 
   const handleSubmit = async (e) => {
@@ -45,24 +46,17 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setGeneralError(data.msg || "Login failed");
-      } else {
-        localStorage.setItem("token", data.access_token);
-        alert("Login successful!");
+      const result = await login(formData);
+      
+      if (result.success) {
+        toast.success("Login successful!");
         navigate("/dashboard");
+      } else {
+        toast.error(result.error || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setGeneralError("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     }
 
     setLoading(false);
@@ -74,12 +68,6 @@ export default function Login() {
         <h2 className="text-4xl font-bold text-center text-gray-800 mb-8">
           Sign In
         </h2>
-
-        {generalError && (
-          <p className="text-center text-red-600 mb-6 font-semibold">
-            {generalError}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} noValidate>
           {/* Email Input */}
@@ -171,6 +159,19 @@ export default function Login() {
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
+
+        {/* Register Link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link
+              to="/register"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Sign up here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

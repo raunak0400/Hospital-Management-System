@@ -1,16 +1,27 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../utils/auth';
+import Loader from './Loader';
 
-const ProtectedRoute = ({ children }) => {
-  // Step 1: Check if user is logged in (you can use localStorage for now)
-  const token = localStorage.getItem('token'); // pretend login sets this
+const ProtectedRoute = ({ children, requiredRole = null }) => {
+  const { isAuthenticated, loading, hasRole } = useAuth();
 
-  // Step 2: If not logged in, send them to login page
-  if (!token) {
+  // Show loader while checking authentication
+  if (loading) {
+    return <Loader />;
+  }
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
-  // Step 3: If logged in, show the page they wanted
+  // If role is required and user doesn't have it, redirect to dashboard
+  if (requiredRole && !hasRole(requiredRole)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // User is authenticated and has required role (if any)
   return children;
 };
 
