@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   UserIcon,
   PhoneIcon,
@@ -9,9 +8,6 @@ import {
   PlusIcon,
   XIcon
 } from '@heroicons/react/outline';
-import { patientAPI } from '../services/api';
-import Loader from '../components/Loader';
-import toast from 'react-hot-toast';
 
 // Helper for nested state updates
 const setNestedValue = (obj, path, value) => {
@@ -49,15 +45,12 @@ const initialState = {
   status: 'active'
 };
 
-const AddPatient = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+function App() {
   const [form, setForm] = useState(initialState);
   const [newMedical, setNewMedical] = useState('');
   const [newAllergy, setNewAllergy] = useState('');
   const [newMedication, setNewMedication] = useState('');
 
-  // Robust input handler for flat and nested fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => {
@@ -71,7 +64,6 @@ const AddPatient = () => {
     });
   };
 
-  // Tag add/remove helpers
   const addTag = (field, value, setter) => {
     if (value.trim()) {
       setForm(prev => ({ ...prev, [field]: [...prev[field], value.trim()] }));
@@ -82,37 +74,7 @@ const AddPatient = () => {
     setForm(prev => ({ ...prev, [field]: prev[field].filter((_, i) => i !== idx) }));
   };
 
-  // Form validation
-  const validate = () => {
-    const required = ['firstName', 'lastName', 'dateOfBirth', 'gender', 'phone'];
-    for (const field of required) {
-      if (!form[field]) {
-        toast.error(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    try {
-      setLoading(true);
-      await patientAPI.createPatient(form);
-      toast.success('Patient added successfully');
-      navigate('/patients');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add patient');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Reusable input field
   const InputField = ({ label, name, type = 'text', required = false, icon: Icon, ...props }) => {
-    // Support nested fields
     let value = name.includes('.')
       ? name.split('.').reduce((acc, key) => acc?.[key], form) ?? ''
       : form[name] ?? '';
@@ -139,7 +101,6 @@ const AddPatient = () => {
     );
   };
 
-  // Tag list component
   const TagList = ({ items, onRemove, label, onAdd, newItem, setNewItem, placeholder }) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -180,16 +141,10 @@ const AddPatient = () => {
     </div>
   );
 
-  if (loading) return <Loader size="lg" />;
-
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Add New Patient</h1>
-        <p className="text-gray-600">Enter patient information to create a new record</p>
-      </div>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
+    <div className="max-w-4xl mx-auto py-10">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Patient (Standalone)</h1>
+      <form className="space-y-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,7 +189,6 @@ const AddPatient = () => {
             <InputField label="Address" name="address" icon={LocationMarkerIcon} placeholder="Enter full address" />
           </div>
         </div>
-        {/* Emergency Contact */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -243,7 +197,6 @@ const AddPatient = () => {
             <InputField label="Contact Phone" name="emergencyContact.phone" type="tel" placeholder="Enter contact phone" />
           </div>
         </div>
-        {/* Medical Info */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Medical Information</h2>
           <div className="space-y-6">
@@ -276,7 +229,6 @@ const AddPatient = () => {
             />
           </div>
         </div>
-        {/* Insurance Info */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Insurance Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -285,26 +237,25 @@ const AddPatient = () => {
             <InputField label="Group Number" name="insurance.groupNumber" placeholder="Enter group number" />
           </div>
         </div>
-        {/* Actions */}
         <div className="flex justify-end space-x-4">
           <button
             type="button"
-            onClick={() => navigate('/patients')}
             className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            onClick={() => window.location.reload()}
           >
-            Cancel
+            Reset
           </button>
           <button
             type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            onClick={e => e.preventDefault()}
           >
-            {loading ? 'Adding...' : 'Add Patient'}
+            Add Patient
           </button>
         </div>
       </form>
     </div>
   );
-};
+}
 
-export default AddPatient;
+export default App; 

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Don't forget to import Link if you have it in your JSX
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../utils/auth";
+import toast from "react-hot-toast";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -11,10 +13,10 @@ export default function Register() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
-  const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const validate = () => {
     const tempErrors = {};
@@ -40,7 +42,6 @@ export default function Register() {
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
-    setGeneralError("");
   };
 
   const handleSubmit = async (e) => {
@@ -53,34 +54,26 @@ export default function Register() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const result = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
       });
-
-      const data = await res.json(); // Always parse response as JSON, even for errors
-
-      if (!res.ok) {
-        // Check for specific error message from the backend
-        if (data.msg === "Email already exists") { // This checks the 'msg' from Flask
-          alert("You already have an account. Please sign in.");
-          navigate("/login"); // Redirect to login page
-        } else {
-          // Display other backend errors
-          setGeneralError(data.msg || "Registration failed. Please try again.");
-        }
+      
+      if (result.success) {
+        toast.success("Registration successful!");
+        navigate("/dashboard");
       } else {
-        alert("Registration successful!");
-        // Optionally store token if returned (your backend currently doesn't return one for register)
-        if (data.access_token) {
-          localStorage.setItem("token", data.access_token);
+        if (result.error === "Email already exists") {
+          toast.error("You already have an account. Please sign in.");
+          navigate("/login");
+        } else {
+          toast.error(result.error || "Registration failed");
         }
-        navigate("/login");
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setGeneralError("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -92,12 +85,6 @@ export default function Register() {
         <h2 className="text-4xl font-bold text-center text-gray-800 mb-8">
           Create Account
         </h2>
-
-        {generalError && (
-          <p className="text-center text-red-600 mb-6 font-semibold">
-            {generalError}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} noValidate>
           {/* Name */}
@@ -196,17 +183,44 @@ export default function Register() {
             className="w-full flex justify-center items-center bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold py-3 rounded-xl shadow-lg transition-colors"
             aria-busy={loading}
           >
+            {loading && (
+              <svg
+                className="animate-spin h-5 w-5 mr-3 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            )}
             {loading ? "Creating Account..." : "Register"}
           </button>
         </form>
+        
         {/* Link to login page */}
-        <p className="text-center text-gray-600 mt-6">
-          Already have an account?{" "}
-          {/* Ensure you import Link from 'react-router-dom' */}
-          <a onClick={() => navigate("/login")} className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer">
-            Sign In
-          </a>
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-medium text-green-600 hover:text-green-500"
+            >
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
