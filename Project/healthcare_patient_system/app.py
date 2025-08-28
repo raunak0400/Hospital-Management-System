@@ -1,18 +1,37 @@
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError, ConnectionFailure
 import config
 import uuid
 import jwt
 import bcrypt
 import datetime
+import logging
+import os
 from functools import wraps
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_compress import Compress
 
-SECRET_KEY = "04002966"
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.config.from_object(config)
+
+# Initialize extensions
 CORS(app)
+Compress(app)
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+SECRET_KEY = config.JWT_SECRET_KEY
 
 # ------------------------
 # Auth Decorators
@@ -52,52 +71,81 @@ def role_required(role):
     return decorator
 
 # MongoDB Connection
-client = MongoClient(config.MONGO_URI)
+try:
+    client = MongoClient(config.MONGO_URI, serverSelectionTimeoutMS=5000)
+    # Test the connection
+    client.admin.command('ping')
+    logger.info("Successfully connected to MongoDB")
+except ConnectionFailure as e:
+    logger.error(f"Failed to connect to MongoDB: {e}")
+    raise
+
 db = client[config.DB_NAME]
 patients_collection = db['patients']
 users_collection = db['users']
 
-# Create indexes
-patients_collection.create_index("firstName", background=True)
-patients_collection.create_index("lastName", background=True)
-patients_collection.create_index("phone", background=True)
-patients_collection.create_index("email", background=True)
+# Create indexes for better performance
+try:
+    patients_collection.create_index("firstName", background=True)
+    patients_collection.create_index("lastName", background=True)
+    patients_collection.create_index("phone", background=True)
+    patients_collection.create_index("email", background=True)
+    patients_collection.create_index("createdAt", background=True)
+    users_collection.create_index("email", unique=True, background=True)
+    logger.info("Database indexes created successfully")
+except Exception as e:
+    logger.error(f"Error creating indexes: {e}")
 
 # ------------------------
 # Auth Routes
 # ------------------------
 
 @app.route('/api/auth/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
-    data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    name = data.get('name')
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+        name = data.get('name', '').strip()
 
-    if not email or not password or not name:
-        return jsonify({"message": "Missing data: name, email, or password"}), 400
+        # Validation
+        if not email or not password or not name:
+            return jsonify({"error": "Missing required fields: name, email, or password"}), 400
 
-    # Check if user already exists
-    if users_collection.find_one({"email": email}):
-        return jsonify({"message": "Email already exists"}), 409
+        if len(password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters long"}), 400
 
-    hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    
-    user = {
-        "name": name,
-        "email": email,
-        "password": hashed_pw,
-        "role": data.get("role", "staff"),
-        "createdAt": datetime.datetime.utcnow()
-    }
+        if '@' not in email:
+            return jsonify({"error": "Invalid email format"}), 400
 
-    result = users_collection.insert_one(user)
-    
-    # Generate token for immediate login
-    token = jwt.encode({
-        'user_id': str(result.inserted_id),
-        'email': user['email'],
-        'name': user['name'],
+        # Check if user already exists
+        if users_collection.find_one({"email": email}):
+            return jsonify({"error": "Email already exists"}), 409
+
+        # Hash password with configurable rounds
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(config.BCRYPT_LOG_ROUNDS))
+        
+        user = {
+            "name": name,
+            "email": email,
+            "password": hashed_pw,
+            "role": data.get("role", "staff"),
+            "createdAt": datetime.datetime.utcnow(),
+            "lastLogin": None,
+            "isActive": True
+        }
+
+        result = users_collection.insert_one(user)
+        
+        # Generate token for immediate login
+        token = jwt.encode({
+            'user_id': str(result.inserted_id),
+            'email': user['email'],
+            'name': user['name'],
         'role': user['role'],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }, SECRET_KEY, algorithm='HS256')
@@ -397,16 +445,60 @@ def get_patients_over_time():
     return jsonify(result)
 
 # ------------------------
-# Home Route
+# Health Check Route
 # ------------------------
 
 @app.route('/')
 def home():
-    return "Healthcare Patient Management System Backend is Running!"
+    return jsonify({
+        "message": "Healthcare Patient Management System Backend is Running!",
+        "status": "healthy",
+        "version": "2.0.0"
+    })
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    try:
+        # Test database connection
+        client.admin.command('ping')
+        return jsonify({
+            "status": "healthy",
+            "database": "connected",
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return jsonify({
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e),
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        }), 503
+
+# ------------------------
+# Error Handlers
+# ------------------------
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Resource not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(429)
+def ratelimit_handler(error):
+    return jsonify({"error": "Rate limit exceeded"}), 429
 
 # ------------------------
 # Run the App
 # ------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(
+        debug=config.DEBUG, 
+        host='0.0.0.0', 
+        port=int(os.getenv('PORT', 5000))
+    )

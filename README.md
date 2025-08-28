@@ -12,22 +12,38 @@ A secure, full-stack hospital management web application designed to streamline 
 - 🔐 **JWT-based Authentication & Authorization**
   - Secure login system for Admin, Nurse, and Receptionist roles
   - Role-based access control (RBAC) for protected routes
+  - Configurable password hashing with bcrypt
+  - Rate limiting for security
 
 - 🏥 **Patient Management (CRUD)**
   - Create, read, update, and delete patient records
   - Input validation and error handling
+  - Advanced search with pagination
+  - Data compression for better performance
 
 - 🔍 **Search with Pagination**
   - Efficient server-side filtering of patient records with indexed queries
   - Supports pagination for large datasets
+  - Real-time search capabilities
 
-- 📊 **Admin Dashboard**
+- 📊 **Admin Dashboard & Analytics**
   - Admin-only interface to view all registered users
+  - Patient demographics and disease distribution analytics
+  - Real-time charts and statistics
   - Excludes sensitive info like passwords and MongoDB `_id`
 
 - 🎨 **Frontend**
   - Clean and responsive UI using **React** and **Tailwind CSS**
   - Authentication-aware navigation and route protection
+  - Progressive Web App features
+  - Optimized performance with React Query
+
+- 🛡️ **Security & Performance**
+  - Environment-based configuration
+  - Health check endpoints
+  - Comprehensive error handling
+  - Database connection monitoring
+  - Rate limiting and compression
 
 ---
 
@@ -44,6 +60,9 @@ A secure, full-stack hospital management web application designed to streamline 
 - Flask-JWT-Extended
 - Flask-CORS
 - Flask-PyMongo
+- Flask-Limiter (Rate Limiting)
+- Flask-Compress (Data Compression)
+- Gunicorn (Production Server)
 
 ### **Database**
 - MongoDB (NoSQL)
@@ -63,7 +82,7 @@ A secure, full-stack hospital management web application designed to streamline 
 ### ⚙️ Backend Setup
 
 ```bash
-cd backend
+cd Project/healthcare_patient_system
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -72,12 +91,18 @@ python app.py
 
 Flask app will start at: `http://localhost:5000`
 
+**Environment Configuration:**
+Copy `env.example` to `.env` and configure your environment variables:
+```bash
+cp env.example .env
+```
+
 ---
 
 ### 🌐 Frontend Setup
 
 ```bash
-cd frontend
+cd Project/healthcare-frontend
 npm install
 npm start
 ```
@@ -96,6 +121,9 @@ React app will start at: `http://localhost:3000`
 | PUT    | `/api/patients/:id`       | Update patient details           | ✅        |
 | DELETE | `/api/patients/:id`       | Delete patient                   | ✅        |
 | GET    | `/api/admin/users`        | View all users (Admin only)      | ✅        |
+| GET    | `/api/health`             | Health check endpoint            | ❌        |
+| GET    | `/api/analytics/age`      | Patient age distribution         | ✅        |
+| GET    | `/api/analytics/diseases` | Disease distribution             | ✅        |
 
 ---
 
