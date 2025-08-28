@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
@@ -41,6 +42,8 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (profileData) => api.put('/auth/profile', profileData),
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -68,6 +71,12 @@ export const patientAPI = {
 
   // Delete patient
   deletePatient: (id) => api.delete(`/patients/${id}`),
+
+  // Advanced search
+  advancedSearch: (searchCriteria) => api.post('/search/advanced', searchCriteria),
+
+  // Get patient documents
+  getPatientDocuments: (patientId) => api.get(`/patients/${patientId}/documents`),
 };
 
 // Analytics API
@@ -86,6 +95,77 @@ export const analyticsAPI = {
 
   // Get patients over time
   getPatientsOverTime: () => api.get('/analytics/patients-over-time'),
+
+  // Get revenue analytics
+  getRevenueAnalytics: () => api.get('/analytics/revenue'),
+
+  // Get doctor performance
+  getDoctorPerformance: () => api.get('/analytics/doctor-performance'),
+
+  // Get patient satisfaction
+  getPatientSatisfaction: () => api.get('/analytics/patient-satisfaction'),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  // Get user notifications
+  getNotifications: () => api.get('/notifications'),
+
+  // Mark notification as read
+  markAsRead: (notificationId) => api.put(`/notifications/${notificationId}/read`),
+};
+
+// File Upload API
+export const uploadAPI = {
+  // Upload patient document
+  uploadPatientDocument: (patientId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('patient_id', patientId);
+    
+    return api.post('/upload/patient-document', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+};
+
+// Admin API
+export const adminAPI = {
+  // Get all users
+  getUsers: () => api.get('/admin/users'),
+
+  // Get audit logs
+  getAuditLogs: (params = {}) => {
+    const { page = 1, limit = 50, action = '' } = params;
+    return api.get('/admin/audit-logs', {
+      params: { page, limit, action }
+    });
+  },
+
+  // Get system stats
+  getSystemStats: () => api.get('/admin/system-stats'),
+
+  // Create backup
+  createBackup: () => api.post('/admin/backup'),
+
+  // Run maintenance
+  runMaintenance: () => api.post('/admin/maintenance'),
+};
+
+// Export API
+export const exportAPI = {
+  // Export patients to CSV
+  exportPatients: () => api.get('/export/patients', {
+    responseType: 'blob'
+  }),
+};
+
+// Health Check API
+export const healthAPI = {
+  // Get system health
+  getHealth: () => api.get('/health'),
 };
 
 export default api;

@@ -17,6 +17,7 @@ import PatientDetail from './pages/PatientDetail';
 import NotFound from './pages/NotFound';
 import TestInput from './pages/TestInput';
 import AddPatientStandalone from './pages/AddPatientStandalone';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Protected Route wrapper
 import ProtectedRoute from './components/ProtectedRoute';
@@ -59,6 +60,7 @@ const App = () => {
             <Route path="/" element={<Register />} />
             <Route path="/test-input" element={<TestInput />} />
             <Route path="/add-patient-standalone" element={<AddPatientStandalone />} />
+            <Route path="/admin" element={<AdminDashboard />} />
 
             {/* Protected Routes with Layout */}
             <Route
