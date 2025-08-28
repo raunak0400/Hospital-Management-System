@@ -14,29 +14,39 @@ A secure, full-stack hospital management web application designed to streamline 
   - Role-based access control (RBAC) for protected routes
   - Configurable password hashing with bcrypt
   - Rate limiting for security
+  - Audit logging for compliance
 
 - 🏥 **Patient Management (CRUD)**
   - Create, read, update, and delete patient records
   - Input validation and error handling
   - Advanced search with pagination
   - Data compression for better performance
+  - File upload for patient documents
+  - Unique patient ID generation
 
-- 🔍 **Search with Pagination**
-  - Efficient server-side filtering of patient records with indexed queries
-  - Supports pagination for large datasets
-  - Real-time search capabilities
-
-- 📊 **Admin Dashboard & Analytics**
-  - Admin-only interface to view all registered users
+- 🔍 **Advanced Search & Analytics**
+  - Efficient server-side filtering with indexed queries
+  - Advanced search with multiple criteria
   - Patient demographics and disease distribution analytics
+  - Revenue analytics and doctor performance metrics
+  - Patient satisfaction tracking
   - Real-time charts and statistics
-  - Excludes sensitive info like passwords and MongoDB `_id`
 
-- 🎨 **Frontend**
+- 📊 **Admin Dashboard & System Management**
+  - Comprehensive admin interface for system management
+  - User management and role assignment
+  - Audit logs for security compliance
+  - System health monitoring
+  - Database backup and maintenance
+  - System statistics and performance metrics
+
+- 🎨 **Frontend Enhancements**
   - Clean and responsive UI using **React** and **Tailwind CSS**
   - Authentication-aware navigation and route protection
   - Progressive Web App features
   - Optimized performance with React Query
+  - Real-time notifications
+  - File upload interface
 
 - 🛡️ **Security & Performance**
   - Environment-based configuration
@@ -44,6 +54,8 @@ A secure, full-stack hospital management web application designed to streamline 
   - Comprehensive error handling
   - Database connection monitoring
   - Rate limiting and compression
+  - Input validation and sanitization
+  - Audit trail logging
 
 ---
 
@@ -124,6 +136,15 @@ React app will start at: `http://localhost:3000`
 | GET    | `/api/health`             | Health check endpoint            | ❌        |
 | GET    | `/api/analytics/age`      | Patient age distribution         | ✅        |
 | GET    | `/api/analytics/diseases` | Disease distribution             | ✅        |
+| GET    | `/api/analytics/revenue`  | Revenue analytics                | ✅        |
+| GET    | `/api/analytics/doctor-performance` | Doctor performance metrics | ✅        |
+| POST   | `/api/search/advanced`    | Advanced patient search          | ✅        |
+| POST   | `/api/upload/patient-document` | Upload patient documents    | ✅        |
+| GET    | `/api/admin/users`        | Get all users (Admin only)       | ✅        |
+| GET    | `/api/admin/audit-logs`   | Get audit logs (Admin only)      | ✅        |
+| GET    | `/api/admin/system-stats` | System statistics (Admin only)   | ✅        |
+| POST   | `/api/admin/backup`       | Create system backup (Admin only)| ✅        |
+| POST   | `/api/admin/maintenance`  | Run system maintenance (Admin)   | ✅        |
 
 ---
 
