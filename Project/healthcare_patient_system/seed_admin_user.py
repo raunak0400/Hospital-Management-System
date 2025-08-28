@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 
 # Connect to local MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client["healthcare"]
+db = client["healthcare_db"]
 users = db["users"]
 
 # Check if any users already exist

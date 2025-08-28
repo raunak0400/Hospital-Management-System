@@ -1,0 +1,10 @@
+Flask==2.3.3
+pymongo==4.5.0
+PyJWT==2.8.0
+bcrypt==4.0.1
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+python-dotenv==1.0.0
+flask-limiter==3.5.0
+flask-compress==1.14
+gunicorn==21.2.0
