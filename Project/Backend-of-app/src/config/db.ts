@@ -6,47 +6,63 @@ import {myerr} from '../types/index';
 dotenv.config();
 
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: Number(process.env.DB_PORT),
+  host: process.env.DB_HOST || "db", // ✅ use service name in Docker
+  port: parseInt(process.env.DB_PORT || "5432"),
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASSWORD || "postgres",
+  database: process.env.DB_NAME || "hospital_db",
 });
 
-// Create tables if not exist
-const initDB = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        age INT,
-        address TEXT,
-        contact VARCHAR(20)
+// Retry connection until DB is ready
+async function connectWithRetry(retries = 20, delay = 5000) {
+  while (retries) {
+    try {
+      await pool.query("SELECT NOW()");
+      console.log("✅ Connected to PostgreSQL");
+      return;
+    } catch (err: any) {
+      retries -= 1;
+      console.error(
+        `❌ DB Connection Failed: ${err.message}. Retries left: ${retries}`
       );
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS details (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        symptoms TEXT,
-        treatment TEXT,
-        image TEXT
-      );
-    `);
-
-    console.log("✅ Tables are ready");
-  } catch (err) {
-    console.error("❌ Error creating tables:", err);
+      if (!retries) throw err;
+      await new Promise((res) => setTimeout(res, delay));
+    }
   }
-};
+}
 
-pool.connect()
-  .then(async () => {
-    console.log("✅ Connected to PostgreSQL");
-     await initDB();
-  })
-  .catch((error: myerr) => console.error("❌ DB Connection Error:", error));
+// Initialize DB schema
+async function initDB() {
+  await connectWithRetry();
+
+  // Create tables if they don't exist
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      age INT,
+      address VARCHAR(255),
+      contact VARCHAR(20)
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS details (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      symptoms TEXT,
+      treatment TEXT,
+      image VARCHAR(255)
+    );
+  `);
+
+  console.log("✅ Tables checked/created successfully");
+}
+
+// Call initDB at startup
+initDB().catch((err) => {
+  console.error("❌ Failed to initialize database:", err);
+  process.exit(1); // Stop app if DB setup fails
+});
 
 export default pool;

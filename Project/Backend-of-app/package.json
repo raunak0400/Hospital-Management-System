@@ -4,9 +4,10 @@
   "description": "A TypeScript backend application for simple CRUD operations using PostgreSQL.",
   "main": "src/app.ts",
   "scripts": {
-    "start": "ts-node src/app.ts",
+    "start": "node dist/server.js",
     "build": "tsc",
-    "dev": "ts-node-dev src/app.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --ignore-watch dist --poll src/server.ts",
+
     "test": "jest"
   },
   "dependencies": {
