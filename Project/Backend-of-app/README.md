@@ -1,18 +1,20 @@
-# Hospital Management Information System (HMIS) Backend
+# 🏥 Hospital Management System Backend
 
-This is the backend for a Hospital Management Information System (HMIS) built with Express, TypeScript, and PostgreSQL following an MVC architecture.  
-It provides CRUD APIs for users and details tables, and supports a one-to-many relation (a user can have multiple details).
+This is a **TypeScript + Express** backend for a Hospital Management System.  
+It provides **CRUD APIs** for managing Users and their Medical Details (symptoms, treatment, doctor receipts).  
+The backend uses **PostgreSQL** as the database and supports **Dockerized development**.
 
 ---
 
 ## 🚀 Features
-
-- TypeScript + Express + PostgreSQL
-- MVC architecture (Models, Services, Controllers, Routes)
-- CRUD APIs for users and details
-- One-to-many relation (users ↔ details)
-- Auto table creation on startup
-- Jest + Supertest API tests
+- **TypeScript + Express** backend (MVC architecture)  
+- **PostgreSQL** database with two tables:  
+  - `users` → id, name, age, address, contact  
+  - `details` → id, user_id (FK), symptoms, treatment, image (receipt)  
+- **One-to-Many relationship** (User → Details)  
+- **CRUD APIs** for both tables  
+- **File upload** support using Multer (doctor receipts)  
+- **Docker & Docker Compose** setup for local development  
 
 ---
 
@@ -20,40 +22,75 @@ It provides CRUD APIs for users and details tables, and supports a one-to-many r
 
 ```
 Backend-of-app/
+├── src/
+│   ├── controllers/        # API controllers
+│   ├── services/           # Business logic (UserService, DetailService)
+│   ├── routes/             # Single route file (all APIs)
+│   ├── db/                 # Database connection + initDB
+│   ├── middleware/         # Middleware (file upload, error handling)
+│   ├── app.ts              # Express app setup
+│   └── server.ts           # Entry point (starts server)
 │
-├── .env
+├── uploads/                # Uploaded doctor receipts
+├── Dockerfile.dev          # Development Dockerfile
+├── docker-compose.yml      # Compose config (Backend + Postgres)
 ├── package.json
-├── README.md
 ├── tsconfig.json
-└── src/
-    ├── app.ts
-    ├── config/
-    │   └── db.ts
-    ├── controllers/
-    │   ├── detailController.ts
-    │   └── userController.ts
-    ├── models/
-    │   ├── detailModel.ts
-    │   └── userModel.ts
-    ├── routes/
-    │   └── userRoutes.ts
-    ├── services/
-    │   ├── detailService.ts
-    │   └── userService.ts
-    └── types/
-        └── index.ts
+└── README.md
 ```
 
 ---
 
 ## ⚙️ Setup
 
+## Docker Setup
+1️⃣ Prerequisites
+
+    * Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+    * Make sure Docker is running
+2️⃣ Start the Services
+
+    ```
+    # Build and start backend + database
+    docker-compose build --no-cache
+
+    docker-compose up
+
+    ```
+    This will start:
+
+    hmis_db → PostgreSQL (port 5432)
+
+    hmis_backend → Express server (port 6010 by default)
+
+3️⃣ Stop the Services
+```
+docker-compose down
+```
+
+To remove volumes (clean DB):
+
+```
+docker-compose down -v
+```
+---
+## Local Setup (Without Docker)
 ### 1. Clone & Install
 
 ```sh
-git clone <repo-url>
-cd Backend-of-app
+git clone https://github.com/raunak0400/Hospital-Management-System.git
+
+cd Project/Backend-of-app
+
 npm install
+
+npm run build # Build the TypeScript code
+
+npm run dev # Start the development server
+
+npm start # Start the production server
+
 ```
 
 ### 2. Configure Environment
@@ -69,16 +106,6 @@ DB_PORT=5432
 DB_NAME=hospital_db
 ```
 
-### 3. Run Server
-
-```sh
-npm run dev
-```
-
-Backend will run at:  
-👉 http://localhost:5000
-
----
 
 ## 🗄️ Database
 
