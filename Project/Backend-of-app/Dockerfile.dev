@@ -1,0 +1,22 @@
+#---- Base Image ----
+FROM node:18-alpine
+
+#---- Working dir ----
+WORKDIR /app
+
+#---- Install deps ----
+COPY package*.json ./
+RUN npm install 
+
+#---- Copy code ----
+COPY . .    
+
+#---- Build TS ----
+# For production we will use this line
+#RUN npm run build
+
+#---- Expose Ports ----
+EXPOSE 5000
+
+#---- Start Application ----
+CMD ["npm", "run", "dev"]

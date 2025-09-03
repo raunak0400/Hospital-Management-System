@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -22,12 +21,3 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-=======
-Project/Backend-of-app/.env
-Project/Backend-of-app/node_modules/
-Project/healthcare_patient_system/
-test-healthcare/
-node_modules/
-package-lock.json
-package.json
->>>>>>> 747c19d3bece2a64451adc470f5e733ff59a7e43
